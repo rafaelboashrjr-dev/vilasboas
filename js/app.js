@@ -52,7 +52,6 @@ function excelDateToJSDate(serial){
   const utcValue = utcDays * 86400;
   return new Date(utcValue * 1000);
 }
-
 function parseDate(row){
   const raw = val(row, 'date');
   if(!raw) return null;
@@ -60,16 +59,12 @@ function parseDate(row){
   if(raw instanceof Date) return raw;
   const s = String(raw).trim();
   let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-  if(m){
-    const year = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]);
-    return new Date(year, Number(m[2]) - 1, Number(m[1]));
-  }
+  if(m){ const year = m[3].length === 2 ? 2000 + Number(m[3]) : Number(m[3]); return new Date(year, Number(m[2]) - 1, Number(m[1])); }
   m = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
   if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
-
 function extractYear(row){
   const y = val(row, 'year');
   const yMatch = y.match(/(19\d{2}|20\d{2}|21\d{2})/);
@@ -77,19 +72,12 @@ function extractYear(row){
   const d = parseDate(row);
   return d ? String(d.getFullYear()) : '';
 }
-
 function extractMonth(row){
   const m = val(row, 'month');
-  if(m){
-    const k = keyNorm(m);
-    if(MONTH_ALIASES[k]) return MONTH_ALIASES[k];
-    const n = parseInt(k, 10);
-    if(n >= 1 && n <= 12) return MONTHS[n - 1];
-  }
+  if(m){ const k = keyNorm(m); if(MONTH_ALIASES[k]) return MONTH_ALIASES[k]; const n = parseInt(k, 10); if(n >= 1 && n <= 12) return MONTHS[n - 1]; }
   const d = parseDate(row);
   return d ? MONTHS[d.getMonth()] : '';
 }
-
 function parseDowntime(value){
   if(value == null || value === '') return 0;
   if(typeof value === 'number') return value < 1 ? Math.round(value * 24 * 60) : Math.round(value * 60);
@@ -109,7 +97,6 @@ function formatMinutes(min){
   if(h) return `${h}h`;
   return `${m}m`;
 }
-
 function toast(msg){
   const area = document.getElementById('toastArea');
   const el = document.createElement('div');
@@ -131,7 +118,6 @@ function fillSelect(id, values, selectedValue = ''){
     el.value = unique.includes(selectedValue) ? selectedValue : '';
   }
 }
-
 function populateFilters(){
   const rows = state.rawRows;
   fillSelect('filterYear', rows.map(extractYear));
@@ -144,13 +130,11 @@ function populateFilters(){
   fillSelect('filterStatus', rows.map(r => val(r,'status')), state.filters.status);
   renderWarnings();
 }
-
 function renderWarnings(){
   const warning = document.getElementById('warnings');
   if(!warning) return;
   warning.innerHTML = state.warnings.length ? `<div class="warning-box">Atenção: ${state.warnings.map(html).join(' | ')}</div>` : '';
 }
-
 function syncControls(){
   document.getElementById('filterMonth').value = state.filters.month;
   document.getElementById('filterService').value = state.filters.service;
@@ -161,7 +145,6 @@ function syncControls(){
   document.getElementById('filterStatus').value = state.filters.status;
   [...document.getElementById('filterYear').options].forEach(o => o.selected = state.filters.years.includes(o.value));
 }
-
 function applyFilters(){
   const q = keyNorm(state.filters.search);
   state.rows = state.rawRows.filter(r => {
@@ -174,24 +157,16 @@ function applyFilters(){
   state.page = 1;
   renderAll();
 }
-
 function groupCount(rows, field, limit=12){
   const map = new Map();
-  rows.forEach(r => {
-    const k = field === 'month' ? extractMonth(r) : field === 'year' ? extractYear(r) : (val(r,field) || 'Não informado');
-    map.set(k, (map.get(k) || 0) + 1);
-  });
+  rows.forEach(r => { const k = field === 'month' ? extractMonth(r) : field === 'year' ? extractYear(r) : (val(r,field) || 'Não informado'); map.set(k, (map.get(k) || 0) + 1); });
   return [...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit);
 }
 function groupTime(rows, field, limit=10){
   const map = new Map();
-  rows.forEach(r => {
-    const k = val(r, field) || 'Não informado';
-    map.set(k, (map.get(k) || 0) + parseDowntime(val(r,'downtime')));
-  });
+  rows.forEach(r => { const k = val(r, field) || 'Não informado'; map.set(k, (map.get(k) || 0) + parseDowntime(val(r,'downtime'))); });
   return [...map.entries()].sort((a,b)=>b[1]-a[1]).slice(0,limit);
 }
-
 function renderKpis(){
   const rows = state.rows;
   const total = rows.length;
@@ -206,7 +181,6 @@ function renderKpis(){
   setText('kpiCritical', critical.toLocaleString('pt-BR'));
   setText('kpiTopService', svc);
 }
-
 function createChart(id, type, labels, datasets, onClickField){
   const ctx = document.getElementById(id);
   if(state.charts[id]) state.charts[id].destroy();
@@ -228,7 +202,6 @@ function createChart(id, type, labels, datasets, onClickField){
     }
   });
 }
-
 function renderCharts(){
   const years = [...new Set(state.rows.map(extractYear).filter(Boolean))].sort();
   const datasets = years.map(y => ({ label:y, data:MONTHS.map(m => state.rows.filter(r => extractYear(r) === y && extractMonth(r) === m).length), borderWidth:2, tension:.35 }));
@@ -238,7 +211,6 @@ function renderCharts(){
   const mappings = [['chartService','service','Serviços'],['chartCategory','category','Categorias'],['chartOwner','owner','Responsáveis'],['chartCause','cause','Causas']];
   mappings.forEach(([id,field,label]) => { const g = groupCount(state.rows,field,10); createChart(id,'bar',g.map(x=>x[0]),[{label,data:g.map(x=>x[1]),borderWidth:2,borderRadius:10}],field === 'cause' ? null : field); });
 }
-
 function renderRanking(){
   const list = document.getElementById('rankingList');
   const rows = groupTime(state.rows,'service',10);
@@ -258,7 +230,6 @@ function renderTable(){
   setText('tableInfo', `${state.rows.length} registro(s) exibido(s) de ${state.rawRows.length}`);
 }
 function renderAll(){ renderKpis(); renderCharts(); renderRanking(); renderTable(); updateTime(); }
-
 function loadRows(rows){
   state.rawRows = rows.filter(r => Object.values(r).some(v => norm(v)));
   state.columns = detectColumns(state.rawRows);
@@ -287,6 +258,36 @@ function exportCsv(){
   const blob = new Blob(['\ufeff' + csv],{type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'incidentes-filtrados-hrjr.csv'; a.click();
 }
+async function exportDashboardPdf(){
+  try{
+    toast('Gerando PDF do dashboard...');
+    await new Promise(resolve => setTimeout(resolve, 250));
+    const element = document.getElementById('dashboardContent');
+    const canvas = await html2canvas(element, { scale: 1.5, useCORS: true, backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg') || '#ffffff' });
+    const imgData = canvas.toDataURL('image/png');
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgHeight = canvas.height * pageWidth / canvas.width;
+    let heightLeft = imgHeight;
+    let position = 0;
+    pdf.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+    heightLeft -= pageHeight;
+    while(heightLeft > 0){
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+    const stamp = new Date().toISOString().slice(0,10);
+    pdf.save(`dashboard-hrjr-incidentes-${stamp}.pdf`);
+    toast('PDF gerado com sucesso');
+  }catch(error){
+    console.error(error);
+    toast('Erro ao gerar PDF. Tente novamente.');
+  }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   if(localStorage.getItem('hrjr-theme') === 'dark') document.body.classList.add('dark');
@@ -295,6 +296,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnRefresh').onclick = () => { renderAll(); toast('Dashboard atualizado'); };
   document.getElementById('btnClear').onclick = () => { state.filters = { years: [], month:'', service:'', category:'', type:'', owner:'', impact:'', status:'', search:'' }; document.getElementById('globalSearch').value = ''; syncControls(); applyFilters(); toast('Filtros limpos'); };
   document.getElementById('btnCsv').onclick = exportCsv;
+  const pdfButton = document.getElementById('btnPdf');
+  if(pdfButton) pdfButton.onclick = exportDashboardPdf;
   document.getElementById('fileInput').onchange = e => e.target.files[0] && readFile(e.target.files[0]);
   const drop = document.getElementById('dropZone');
   ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('dragover'); }));
