@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HRJR Dashboard Executivo v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="side no-print">
+      <div class="brand-card">
+        <img src="../assets/logo-hrjr.svg" alt="HRJR">
+        <strong>Dashboard Executivo</strong>
+        <span>Incidentes de TI</span>
+      </div>
+      <nav>
+        <a href="#executivo" class="active"><i class="fa-solid fa-chart-pie"></i> Executivo</a>
+        <a href="#analises"><i class="fa-solid fa-chart-line"></i> Análises</a>
+        <a href="#operacional"><i class="fa-solid fa-table-cells-large"></i> Operacional</a>
+        <a href="#dados"><i class="fa-solid fa-table"></i> Base</a>
+      </nav>
+      <div class="version">v2.0 preview</div>
+    </aside>
+
+    <main class="main" id="reportArea">
+      <header class="hero" id="executivo">
+        <div class="hero-left">
+          <img src="../assets/logo-hrjr.svg" alt="HRJR" class="hero-logo">
+          <div>
+            <p class="eyebrow">HRJR · Hospital Regional Jorge Rossmann</p>
+            <h1>Gestão Executiva de Incidentes de TI</h1>
+            <span id="lastUpdate">Aguardando carga da planilha</span>
+          </div>
+        </div>
+        <div class="hero-actions no-print">
+          <button id="btnTv"><i class="fa-solid fa-tv"></i> Modo TV</button>
+          <button id="btnPdf" class="primary"><i class="fa-solid fa-file-pdf"></i> PDF Executivo</button>
+        </div>
+      </header>
+
+      <section class="upload no-print" id="dropZone">
+        <div>
+          <strong>Atualizar dashboard</strong>
+          <span>Arraste a planilha Excel/CSV ou selecione o arquivo atualizado.</span>
+        </div>
+        <label><input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden>Selecionar planilha</label>
+      </section>
+
+      <section class="filters no-print">
+        <label>Ano<select id="filterYear" multiple></select></label>
+        <label>Mês<select id="filterMonth"></select></label>
+        <label>Serviço<select id="filterService"></select></label>
+        <label>Impacto<select id="filterImpact"></select></label>
+        <label>Situação<select id="filterStatus"></select></label>
+        <label class="search">Pesquisa<input id="searchInput" placeholder="Buscar incidente, serviço, causa..."></label>
+        <button id="btnClear">Limpar filtros</button>
+      </section>
+
+      <section class="executive-summary">
+        <article class="summary-main">
+          <span>Status operacional</span>
+          <strong id="statusText">Estável</strong>
+          <p id="statusDetail">Sem dados críticos carregados no momento.</p>
+        </article>
+        <article><span>Período</span><strong id="periodText">Todos</strong></article>
+        <article><span>Tendência</span><strong id="trendText">-</strong></article>
+        <article><span>SLA</span><strong id="slaText">-</strong></article>
+      </section>
+
+      <section class="kpis">
+        <article><span>Incidentes</span><strong id="kpiTotal">0</strong><small id="kpiTotalDelta">Base filtrada</small></article>
+        <article><span>Indisponibilidade</span><strong id="kpiDowntime">0h</strong><small>Tempo acumulado</small></article>
+        <article><span>MTTR</span><strong id="kpiMttr">0m</strong><small>Tempo médio</small></article>
+        <article><span>Disponibilidade</span><strong id="kpiAvailability">100%</strong><small>Estimativa operacional</small></article>
+        <article><span>Críticos</span><strong id="kpiCritical">0</strong><small>Crítico + alto</small></article>
+        <article><span>Serviço crítico</span><strong id="kpiTopService">-</strong><small>Maior recorrência</small></article>
+      </section>
+
+      <section class="grid" id="analises">
+        <article class="panel wide"><header><h2>Comparação mensal por ano</h2><p>Incidentes por mês, separados por ano.</p></header><canvas id="yearChart"></canvas></article>
+        <article class="panel"><header><h2>Impacto</h2><p>Distribuição por criticidade.</p></header><canvas id="impactChart"></canvas></article>
+        <article class="panel"><header><h2>SLA por serviço</h2><p>Meta estimada de até 60 min.</p></header><canvas id="slaChart"></canvas></article>
+        <article class="panel"><header><h2>Serviços</h2><p>Top serviços afetados.</p></header><canvas id="serviceChart"></canvas></article>
+        <article class="panel"><header><h2>Situação</h2><p>Status operacional.</p></header><canvas id="statusChart"></canvas></article>
+        <article class="panel wide"><header><h2>Tendência dos últimos 12 meses</h2><p>Visão executiva de recorrência.</p></header><canvas id="trendChart"></canvas></article>
+      </section>
+
+      <section class="ops" id="operacional">
+        <article class="panel"><header><h2>Top 10 maiores indisponibilidades</h2></header><div id="ranking"></div></article>
+        <article class="panel"><header><h2>Heatmap operacional</h2><p>Dia útil × faixa horária.</p></header><div id="heatmap" class="heatmap"></div></article>
+      </section>
+
+      <section class="panel no-print" id="dados">
+        <header><h2>Base carregada</h2><p id="tableInfo">Nenhuma planilha carregada.</p></header>
+        <div class="table-wrap"><table id="dataTable"><thead></thead><tbody></tbody></table></div>
+      </section>
+    </main>
+  </div>
+  <div id="toast"></div>
+  <script src="js/app.js"></script>
+</body>
+</html>
