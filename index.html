@@ -24,33 +24,39 @@
       <nav class="menu">
         <a href="#overview" class="active"><i class="fa-solid fa-chart-pie"></i><span>Visão Executiva</span></a>
         <a href="#charts"><i class="fa-solid fa-chart-line"></i><span>Análises</span></a>
+        <a href="#advanced"><i class="fa-solid fa-chart-simple"></i><span>Indicadores Avançados</span></a>
         <a href="#ranking"><i class="fa-solid fa-ranking-star"></i><span>Top 10</span></a>
         <a href="#table"><i class="fa-solid fa-table"></i><span>Base de Dados</span></a>
       </nav>
-      <div class="sidebar-footer"><button id="collapseSidebar"><i class="fa-solid fa-angles-left"></i></button><small>Dashboard TI v0.8</small></div>
+      <div class="sidebar-footer"><button id="collapseSidebar"><i class="fa-solid fa-angles-left"></i></button><small>Dashboard TI v0.9</small></div>
     </aside>
 
     <main class="content" id="dashboardContent">
       <header class="topbar">
         <div><p class="eyebrow">Hospital Regional Jorge Rossmann</p><h1>Gestão de Incidentes de TI</h1><span class="subtitle">Disponibilidade, impacto, recorrência e comparação entre anos</span></div>
-        <div class="actions"><span class="last-update"><i class="fa-regular fa-clock"></i> <b id="lastUpdate">--</b></span><button id="btnTheme" class="btn secondary"><i class="fa-solid fa-moon"></i> Tema</button><button id="btnPdf" class="btn primary"><i class="fa-solid fa-file-pdf"></i> Salvar PDF</button></div>
+        <div class="actions">
+          <span class="last-update"><i class="fa-regular fa-clock"></i> <b id="lastUpdate">--</b></span>
+          <button id="btnTheme" class="btn secondary"><i class="fa-solid fa-moon"></i> Tema</button>
+          <button id="btnFullscreen" class="btn secondary"><i class="fa-solid fa-tv"></i> Modo TV</button>
+          <button id="btnPdf" class="btn primary"><i class="fa-solid fa-file-pdf"></i> PDF Executivo</button>
+        </div>
       </header>
 
-      <section class="upload-zone" id="dropZone">
-        <div class="upload-info"><i class="fa-solid fa-file-excel"></i><div><strong>Carregar nova base de incidentes</strong><span>Arraste um Excel/CSV ou selecione manualmente. A cada nova planilha carregada, o dashboard será recalculado automaticamente.</span></div></div>
+      <section class="upload-zone no-pdf" id="dropZone">
+        <div class="upload-info"><i class="fa-solid fa-file-excel"></i><div><strong>Carregar nova base de incidentes</strong><span>Arraste um Excel/CSV ou selecione manualmente. A cada nova planilha carregada, o dashboard será recalculado e salvo em cache no navegador.</span></div></div>
         <label class="btn primary"><input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden><i class="fa-solid fa-upload"></i> Selecionar planilha</label>
       </section>
 
       <div id="warnings"></div>
 
-      <section class="toolbar">
+      <section class="toolbar no-pdf">
         <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input id="globalSearch" placeholder="Pesquisa instantânea por incidente, serviço, causa, responsável..."></div>
         <button id="btnRefresh" class="btn secondary"><i class="fa-solid fa-rotate"></i> Atualizar</button>
         <button id="btnClear" class="btn success"><i class="fa-solid fa-filter-circle-xmark"></i> Limpar filtros</button>
         <button id="btnCsv" class="btn secondary"><i class="fa-solid fa-file-csv"></i> CSV</button>
       </section>
 
-      <section class="filters">
+      <section class="filters no-pdf">
         <label>Ano<select id="filterYear" multiple></select><small class="hint">Ctrl + clique para comparar anos</small></label>
         <label>Mês<select id="filterMonth"></select></label>
         <label>Serviço<select id="filterService"></select></label>
@@ -59,6 +65,13 @@
         <label>Responsável<select id="filterOwner"></select></label>
         <label>Impacto<select id="filterImpact"></select></label>
         <label>Situação<select id="filterStatus"></select></label>
+      </section>
+
+      <section class="executive-strip" id="executiveSummary">
+        <article><span>Período filtrado</span><strong id="summaryPeriod">Todos os períodos</strong></article>
+        <article><span>Tendência</span><strong id="summaryTrend">-</strong></article>
+        <article><span>SLA estimado</span><strong id="summarySla">-</strong></article>
+        <article><span>Serviço crítico</span><strong id="summaryCriticalService">-</strong></article>
       </section>
 
       <section class="kpis" id="overview">
@@ -80,9 +93,17 @@
         <article class="panel"><header><div><h2>Causas raiz</h2><p>Principais causas registradas.</p></div></header><canvas id="chartCause"></canvas></article>
       </section>
 
+      <section class="charts" id="advanced">
+        <article class="panel span2"><header><div><h2>Tendência últimos 12 meses</h2><p>Evolução móvel para acompanhamento executivo.</p></div></header><canvas id="chartTrend12"></canvas></article>
+        <article class="panel"><header><div><h2>SLA por serviço</h2><p>Percentual estimado dentro da meta.</p></div></header><canvas id="chartSlaService"></canvas></article>
+        <article class="panel"><header><div><h2>Tempo médio por serviço</h2><p>MTTR por serviço principal.</p></div></header><canvas id="chartAvgDowntime"></canvas></article>
+        <article class="panel span2"><header><div><h2>Heatmap operacional</h2><p>Dia da semana × horário de ocorrência.</p></div></header><div id="heatmap" class="heatmap-grid"></div></article>
+        <article class="panel span2"><header><div><h2>Drill-down do filtro atual</h2><p>Detalhamento automático conforme cliques nos gráficos.</p></div></header><div id="drilldown" class="drilldown-list"></div></article>
+      </section>
+
       <section class="panel" id="ranking"><header><div><h2>Top 10 maiores indisponibilidades</h2><p>Ranking pelo tempo de indisponibilidade.</p></div></header><div id="rankingList" class="ranking-list"></div></section>
 
-      <section class="panel" id="table">
+      <section class="panel no-pdf" id="table">
         <header><div><h2>Base de incidentes</h2><p id="tableInfo">Nenhum arquivo carregado.</p></div><div class="pagination"><button id="prevPage">Anterior</button><span id="pageInfo">1/1</span><button id="nextPage">Próxima</button></div></header>
         <div class="table-wrap"><table id="incidentTable"><thead></thead><tbody></tbody></table></div>
       </section>
